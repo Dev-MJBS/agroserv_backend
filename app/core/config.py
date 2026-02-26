@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     FIREBASE_TOKEN_URI: str = ""
     FIREBASE_AUTH_PROVIDER_X509_CERT_URL: str = ""
     FIREBASE_CLIENT_X509_CERT_URL: str = ""
+    FIREBASE_UNIVERSE_DOMAIN: str = "googleapis.com"
 
     # CORS
     ALLOWED_ORIGINS: str = "http://localhost:3000"
@@ -35,6 +36,7 @@ class Settings(BaseSettings):
             "token_uri": self.FIREBASE_TOKEN_URI,
             "auth_provider_x509_cert_url": self.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
             "client_x509_cert_url": self.FIREBASE_CLIENT_X509_CERT_URL,
+            "universe_domain": self.FIREBASE_UNIVERSE_DOMAIN,
         }
 
     class Config:
