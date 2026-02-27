@@ -10,3 +10,4 @@ pdfplumber
 reportlab
 openai
 httpx
+google-generativeai
