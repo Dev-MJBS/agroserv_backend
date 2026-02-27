@@ -60,10 +60,14 @@ initialize_firebase()
 settings = get_settings()
 
 # CORS configuration
-# Permitindo origens do Netlify e Localhost para desenvolvimento
+# Se allow_credentials=True, allow_origins NÃO pode ser ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=[
+        "https://agroserv.netlify.app",
+        "http://localhost:3000",
+        "https://agroserv-git-main-dev-mjbs.vercel.app" # Exemplo de preview
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -73,7 +77,7 @@ app.add_middleware(
 # Include modules' routers
 app.include_router(hr_router, prefix="/api/hr", tags=["HR"])
 app.include_router(finance_router, prefix="/api/finance", tags=["Finance"])
-app.include_router(logistics_router, prefix="/logistica", tags=["Logistics"])
+app.include_router(logistics_router, prefix="/api/logistica", tags=["Logistics"])
 
 @app.get("/")
 async def root():
