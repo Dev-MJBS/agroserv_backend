@@ -79,6 +79,9 @@ async def comparar_documentos(
     arquivo_2: UploadFile = File(None),
     mapeamento: str = Form(...)
 ):
+    """
+    Recebe dois arquivos e um mapeamento JSON de colunas entre eles.
+    """
     try:
         mapping_list = json.loads(mapeamento)
     except:
