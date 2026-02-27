@@ -4,20 +4,23 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=settings.OPENROUTER_API_KEY,
-)
-
 async def analyze_with_ai(prompt: str, system_prompt: str = "Você é um assistente de IA especialista em logística e gestão empresarial."):
     """
     Função genérica para chamar o OpenRouter usando o modelo especificado.
     """
-    if not settings.OPENROUTER_API_KEY:
+    settings = get_settings()
+    
+    if not settings.OPENROUTER_API_KEY or "your_openrouter_key" in settings.OPENROUTER_API_KEY:
         # Fallback para o modo offline/mock se a chave não estiver configurada
-        return {"error": "Chave OpenRouter não configurada. Ative-a no .env para análise real."}
+        return "Erro: Chave do OpenRouter não configurada. Configure a variável OPENROUTER_API_KEY no painel de controle."
     
     try:
+        # Inicializa o cliente dentro da função para garantir que usa as variáveis mais recentes
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=settings.OPENROUTER_API_KEY,
+        )
+
         completion = client.chat.completions.create(
             extra_headers={
                 "HTTP-Referer": settings.OPENROUTER_REFERER,

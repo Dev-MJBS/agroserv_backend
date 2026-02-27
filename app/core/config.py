@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     # OpenRouter / AI
     OPENROUTER_API_KEY: str = ""
-    OPENROUTER_MODEL: str = "google/gemini-2.0-flash-001" # Gemini 2.0 ou o modelo Flash mais recente
+    OPENROUTER_MODEL: str = "openai/gpt-5-nano"
     OPENROUTER_REFERER: str = "https://agroserv.netlify.app"
     OPENROUTER_TITLE: str = "RH_Agroserv ERP"
 
