@@ -22,13 +22,14 @@ initialize_firebase()
 settings = get_settings()
 
 # CORS configuration
-# Prepared for Next.js frontend on Netlify or local environment
+# Permitindo origens do Netlify e Localhost para desenvolvimento
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=["*"], # Para depuração inicial, use "*". Em produção, use sua lista de domínios.
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include modules' routers
