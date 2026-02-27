@@ -61,9 +61,9 @@ async def analisar_equipe_ia():
             return {"analise": "Nenhum funcionário cadastrado para análise."}
 
         resumo = json.dumps([{ "nome": f["nome"], "cargo": f["cargo"] } for f in funcionarios[:15]])
-        prompt = f"Com base nos seguintes funcionários do agronegócio: {resumo}. Sugira 3 treinamentos cruciais para essa equipe este mês. Responda em PORTUGUÊS."
+        prompt = f"# ANÁLISE EXECUTIVA DE GESTÃO DE PESSOAS\n\nCom base nos seguintes funcionários do agronegócio: {resumo}.\n\nSugira 3 treinamentos cruciais para essa equipe este mês. Responda em PORTUGUÊS usando formatação Markdown (títulos ##, listas * e negrito **)."
         
-        analise = await analyze_with_ai(prompt, "Você é um consultor de RH estratégico para o agronegócio.")
+        analise = await analyze_with_ai(prompt, "Você é um consultor de RH estratégico para o agronegócio especializado em agronegócio brasileiro. Use SEMPRE formatação Markdown para sua resposta.")
         return {"analise": analise}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

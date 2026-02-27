@@ -2,10 +2,9 @@ import json
 import google.generativeai as genai
 from app.core.config import get_settings
 
-def analyze_with_ai_sync(prompt: str, system_prompt: str = "Você é um assistente de IA especialista em logística e gestão empresarial."):
+def analyze_with_ai_sync(prompt: str, system_prompt: str = "Você é um assistente de IA especialista em logística e gestão empresarial. SEMPRE use formatação Markdown rica (títulos ##, listas - e negritos **) para organizar a resposta de forma elegante e profissional."):
     """
     Função para chamar o Google Gemini Studio API.
-    O SDK do Google é síncrono por padrão na maioria dos exemplos, vamos usar a versão configurada.
     """
     settings = get_settings()
     

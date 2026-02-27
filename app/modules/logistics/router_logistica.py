@@ -72,6 +72,8 @@ async def analisar_termos_com_ia(dados_faltantes: List[Dict[str, Any]], mapeamen
     resumo_amostra = json.dumps(dados_faltantes[:12], indent=2, ensure_ascii=False)
     
     prompt = f"""
+    # ANÁLISE EXECUTIVA DE AUDITORIA LOGÍSTICA
+    
     Como especialista em logística agrícola, analise estas divergências entre dois documentos:
     
     {instrucoes_custom if instrucoes_custom else "Não há instruções customizadas para as colunas."}
@@ -79,14 +81,15 @@ async def analisar_termos_com_ia(dados_faltantes: List[Dict[str, Any]], mapeamen
     Amostra de registros que NÃO conferem:
     {resumo_amostra}
     
-    TAREFA:
+    ## TAREFA:
     1. Identifique se as divergências são erros reais ou se sua regra de instrução explica a diferença (ex: conversão de unidades).
     2. Resuma o que o gestor deve fazer (Ignorar, Corrigir ou Auditar).
-    3. Seja direto e use tom profissional.
-    Responda em PORTUGUÊS.
+    3. Use formatação Markdown: use títulos (##), listas (*) e negrito (**) para destacar pontos críticos.
+    
+    Responda em PORTUGUÊS de forma organizada e profissional.
     """
     
-    system_prompt = "Você é o assistente inteligente do Agroserv ERP, especialista em auditoria logística e análise de dados agrícolas."
+    system_prompt = "Você é o assistente inteligente do Agroserv ERP, especialista em auditoria logística e análise de dados agrícolas. Sua resposta deve ser formatada INTEGRALMENTE em Markdown."
     
     return await analyze_with_ai(prompt, system_prompt)
 

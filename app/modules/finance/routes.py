@@ -51,9 +51,9 @@ async def analisar_fluxo_ia():
 
         # Compactamos para o prompt
         resumo = json.dumps([{ "tipo": m["tipo"], "valor": m["valor"], "cat": m["categoria"] } for m in movs])
-        prompt = f"Com base nessas movimentações financeiras: {resumo}. Dê 2 dicas práticas para reduzir custos ou aumentar a margem no agronegócio este trimestre. Responda em PORTUGUÊS."
+        prompt = f"# ANÁLISE EXECUTIVA DE FLUXO FINANCEIRO\n\nCom base nestas movimentações financeiras do agronegócio: {resumo}.\n\nDê 2 dicas práticas para reduzir custos ou aumentar a margem neste trimestre. Responda em PORTUGUÊS usando formatação Markdown (títulos ##, listas * e negrito **)."
         
-        analise = await analyze_with_ai(prompt, "Você é um CFO de uma grande empresa do agronegócio brasileiro.")
+        analise = await analyze_with_ai(prompt, "Você é um CFO de uma grande empresa do agronegócio brasileiro especializado em análise financeira e estratégica. Use SEMPRE Markdown para formatar sua resposta.")
         return {"analise": analise}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
