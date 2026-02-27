@@ -84,26 +84,56 @@ async def comparar_documentos(
     """
     try:
         mapping_list = json.loads(mapeamento)
-    except:
-        raise HTTPException(status_code=400, detail="Mapeamento inválido")
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, 
+            detail={"code": "LOG-ERR-MAPPING-JSON", "message": f"O JSON do mapeamento é inválido: {str(e)}"}
+        )
 
-    content_1 = await arquivo_1.read()
-    df1 = extract_dataframe_from_file(content_1, arquivo_1.filename)
+    try:
+        content_1 = await arquivo_1.read()
+        df1 = extract_dataframe_from_file(content_1, arquivo_1.filename)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, 
+            detail={"code": "LOG-ERR-FILE-1-READ", "message": f"Erro ao ler Arquivo 1: {str(e)}"}
+        )
     
-    if arquivo_2:
-        content_2 = await arquivo_2.read()
-        df2 = extract_dataframe_from_file(content_2, arquivo_2.filename)
-    else:
-        df2 = df1.copy()
+    try:
+        if arquivo_2:
+            content_2 = await arquivo_2.read()
+            df2 = extract_dataframe_from_file(content_2, arquivo_2.filename)
+        else:
+            df2 = df1.copy()
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, 
+            detail={"code": "LOG-ERR-FILE-2-READ", "message": f"Erro ao ler Arquivo 2: {str(e)}"}
+        )
 
-    cols_1 = [m['col1'] for m in mapping_list]
-    cols_2 = [m['col2'] for m in mapping_list]
+    try:
+        cols_1 = [m['col1'] for m in mapping_list]
+        cols_2 = [m['col2'] for m in mapping_list]
 
-    df1_subset = df1[cols_1].fillna("").astype(str).apply(lambda x: x.str.strip())
-    df2_subset = df2[cols_2].fillna("").astype(str).apply(lambda x: x.str.strip())
+        # Verifica se colunas existem
+        missing_1 = [c for c in cols_1 if c not in df1.columns]
+        missing_2 = [c for c in cols_2 if c not in df2.columns]
+        
+        if missing_1:
+            raise ValueError(f"Colunas não encontradas no Arquivo 1: {missing_1}")
+        if missing_2:
+            raise ValueError(f"Colunas não encontradas no Arquivo 2: {missing_2}")
 
-    rename_dict = {m['col2']: m['col1'] for m in mapping_list}
-    df2_renamed = df2_subset.rename(columns=rename_dict)
+        df1_subset = df1[cols_1].fillna("").astype(str).apply(lambda x: x.str.strip())
+        df2_subset = df2[cols_2].fillna("").astype(str).apply(lambda x: x.str.strip())
+
+        rename_dict = {m['col2']: m['col1'] for m in mapping_list}
+        df2_renamed = df2_subset.rename(columns=rename_dict)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, 
+            detail={"code": "LOG-ERR-MAPPING-COLS", "message": str(e)}
+        )
 
     set1 = set(tuple(row) for row in df1_subset.itertuples(index=False, name=None))
     set2 = set(tuple(row) for row in df2_renamed.itertuples(index=False, name=None))
