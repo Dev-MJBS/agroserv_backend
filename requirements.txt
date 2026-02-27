@@ -4,3 +4,6 @@ firebase-admin
 python-dotenv
 pydantic-settings
 python-multipart
+pandas
+openpyxl
+pdfplumber

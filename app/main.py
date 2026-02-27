@@ -6,7 +6,7 @@ from app.firebase_config import initialize_firebase
 # Import routers from modules
 from app.modules.hr.routes import router as hr_router
 from app.modules.finance.routes import router as finance_router
-from app.modules.logistics.routes import router as logistics_router
+from app.modules.logistics.router_logistica import router as logistics_router
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -34,7 +34,7 @@ app.add_middleware(
 # Include modules' routers
 app.include_router(hr_router, prefix="/api/hr", tags=["HR"])
 app.include_router(finance_router, prefix="/api/finance", tags=["Finance"])
-app.include_router(logistics_router, prefix="/api/logistics", tags=["Logistics"])
+app.include_router(logistics_router, prefix="/logistica", tags=["Logistics"])
 
 @app.get("/")
 async def root():
