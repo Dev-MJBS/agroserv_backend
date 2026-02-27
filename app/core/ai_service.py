@@ -1,38 +1,34 @@
 import json
-from openai import OpenAI
+import google.generativeai as genai
 from app.core.config import get_settings
 
-settings = get_settings()
-
-async def analyze_with_ai(prompt: str, system_prompt: str = "Você é um assistente de IA especialista em logística e gestão empresarial."):
+def analyze_with_ai_sync(prompt: str, system_prompt: str = "Você é um assistente de IA especialista em logística e gestão empresarial."):
     """
-    Função genérica para chamar o OpenRouter usando o modelo especificado.
+    Função para chamar o Google Gemini Studio API.
+    O SDK do Google é síncrono por padrão na maioria dos exemplos, vamos usar a versão configurada.
     """
     settings = get_settings()
     
-    if not settings.OPENROUTER_API_KEY or "your_openrouter_key" in settings.OPENROUTER_API_KEY:
-        # Fallback para o modo offline/mock se a chave não estiver configurada
-        return "Erro: Chave do OpenRouter não configurada. Configure a variável OPENROUTER_API_KEY no painel de controle."
-    
-    try:
-        # Inicializa o cliente dentro da função para garantir que usa as variáveis mais recentes
-        client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=settings.OPENROUTER_API_KEY,
-        )
+    if not settings.GEMINI_API_KEY:
+        return "Erro: Chave do Gemini Studio não configurada."
 
-        completion = client.chat.completions.create(
-            extra_headers={
-                "HTTP-Referer": settings.OPENROUTER_REFERER,
-                "X-Title": settings.OPENROUTER_TITLE,
-            },
-            model=settings.OPENROUTER_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ]
+    try:
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel(
+            model_name=settings.GEMINI_MODEL,
+            system_instruction=system_prompt
         )
-        return completion.choices[0].message.content
+        
+        response = model.generate_content(prompt)
+        return response.text
     except Exception as e:
-        print(f"Erro na chamada OpenRouter: {str(e)}")
+        print(f"Erro na chamada Gemini: {str(e)}")
         return f"Erro na análise de IA: {str(e)}"
+
+async def analyze_with_ai(prompt: str, system_prompt: str = "Você é um assistente de IA especialista em logística e gestão empresarial."):
+    """
+    Wrapper assíncrono para manter compatibilidade com o restante do código.
+    """
+    import asyncio
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, analyze_with_ai_sync, prompt, system_prompt)
