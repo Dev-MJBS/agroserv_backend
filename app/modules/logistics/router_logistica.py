@@ -2,7 +2,7 @@ import io
 import json
 import pandas as pd
 import pdfplumber
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Body, status
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 from datetime import datetime
@@ -274,3 +274,33 @@ async def exportar_pdf(data: ComparacaoSave):
     doc.build(elements)
     buffer.seek(0)
     return StreamingResponse(buffer, headers={'Content-Disposition': 'attachment; filename="relatorio.pdf"'}, media_type="application/pdf")
+
+@router.post("/download-csv")
+async def gerar_relatorio_csv(data: Any = Body(...)):
+    """
+    Recebe os resultados da auditoria IA e converte para um arquivo CSV baixável.
+    """
+    try:
+        # data pode ser uma lista de dicionários ou um dicionário de listas
+        df = pd.DataFrame(data)
+
+        # Geração do buffer em memória com BOM para Excel (utf-8-sig)
+        stream = io.StringIO()
+        df.to_csv(stream, index=False, sep=';', encoding='utf-8-sig')
+        
+        response_content = stream.getvalue()
+        
+        return StreamingResponse(
+            iter([response_content]),
+            media_type='text/csv',
+            headers={
+                "Content-Disposition": "attachment; filename=auditoria_agroserv.csv",
+                "Content-Type": "text/csv; charset=utf-8-sig",
+            }
+        )
+    except Exception as e:
+        print(f"Erro interno no processamento de CSV: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Falha técnica ao processar relatório: {str(e)}"
+        )
