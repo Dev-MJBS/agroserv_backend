@@ -63,11 +63,11 @@ settings = get_settings()
 # Permitindo origens do Netlify e Localhost para desenvolvimento
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Para depuração inicial, use "*". Em produção, use sua lista de domínios.
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
+    expose_headers=["Content-Disposition", "X-Custom-Header"],
 )
 
 # Include modules' routers
