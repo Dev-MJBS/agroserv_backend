@@ -53,27 +53,40 @@ def extract_dataframe_from_file(file_content: bytes, filename: str) -> pd.DataFr
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro ao processar {filename}: {str(e)}")
 
-async def analisar_termos_com_ia(dados_faltantes: List[Dict[str, Any]]) -> str:
+async def analisar_termos_com_ia(dados_faltantes: List[Dict[str, Any]], mapeamento: List[Dict[str, Any]] = None) -> str:
     """
-    Usa o OpenRouter + Gemini 1.5/2.0 para uma análise detalhada dos itens faltantes.
+    Usa o OpenRouter + Gemini para uma análise detalhada dos itens faltantes,
+    considerando instruções personalizadas por coluna (Mapeamento Inteligente).
     """
     if not dados_faltantes:
         return "Nenhum dado faltante para análise."
 
+    # Incorpora instruções customizadas do usuário no prompt
+    instrucoes_custom = ""
+    if mapeamento:
+        for m in mapeamento:
+            if m.get("prompt"):
+                instrucoes_custom += f"- Na coluna '{m['col1']}', considere esta regra: {m['prompt']}\n"
+
     # Criamos um prompt compacto para o modelo
-    resumo_amostra = json.dumps(dados_faltantes[:10], indent=2, ensure_ascii=False)
+    resumo_amostra = json.dumps(dados_faltantes[:12], indent=2, ensure_ascii=False)
     
     prompt = f"""
-    Analise a seguinte amostra de registros que não foram encontrados na comparação entre dois documentos logísticos:
+    Como especialista em logística agrícola, analise estas divergências entre dois documentos:
     
+    {instrucoes_custom if instrucoes_custom else "Não há instruções customizadas para as colunas."}
+
+    Amostra de registros que NÃO conferem:
     {resumo_amostra}
     
-    Identifique se há um padrão nestas falhas (ex: todos são da mesma transportadora ou falta um campo chave). 
-    Resuma em duas sentenças o que o gestor deve fazer agora. 
+    TAREFA:
+    1. Identifique se as divergências são erros reais ou se sua regra de instrução explica a diferença (ex: conversão de unidades).
+    2. Resuma o que o gestor deve fazer (Ignorar, Corrigir ou Auditar).
+    3. Seja direto e use tom profissional.
     Responda em PORTUGUÊS.
     """
     
-    system_prompt = "Você é o assistente inteligente do Agroserv ERP, especialista em análise de logística agrícola e auditoria de documentos."
+    system_prompt = "Você é o assistente inteligente do Agroserv ERP, especialista em auditoria logística e análise de dados agrícolas."
     
     return await analyze_with_ai(prompt, system_prompt)
 
@@ -160,8 +173,8 @@ async def comparar_documentos(
     faltam_no_1 = to_dict_list(faltam_no_1_tuples, cols_1)
     faltam_no_2 = to_dict_list(faltam_no_2_tuples, cols_1)
 
-    # Chamada real para o OpenRouter (Async)
-    analise_ia = await analisar_termos_com_ia(faltam_no_1 + faltam_no_2)
+    # Chamada real para o OpenRouter (Async) com mapeamento inteligente
+    analise_ia = await analisar_termos_com_ia(faltam_no_1 + faltam_no_2, mapping_list)
 
     return {
         "resumo": {
