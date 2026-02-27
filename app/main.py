@@ -20,8 +20,9 @@ app = FastAPI(
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
-    Custom handler for validation errors (like "Field required").
-    Returns a specific code and clear message to help the frontend developer.
+    Custom handler for validation errors.
+    IMPORTANT: Includes CORS headers manually because regular exception handlers 
+    bypass the CORSMiddleware.
     """
     errors = exc.errors()
     error_details = []
@@ -38,9 +39,15 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         if error["type"] == "missing":
             has_missing_field = True
 
-    # Code generation as requested: LOG-REQ (Required field missing) or LOG-VAL (Invalid data)
     error_code = "LOG-ERR-MISSING-FIELD" if has_missing_field else "LOG-ERR-INVALID-FORMAT"
     
+    # Get origin from request to mirror it in CORS (if allowed)
+    origin = request.headers.get("origin")
+    headers = {}
+    if origin:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
@@ -51,6 +58,28 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "required_fields_hint": ["arquivo_1", "arquivo_2 (optional)", "mapeamento"],
             "detected_error_location": first_error_field
         },
+        headers=headers
+    )
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    """
+    Catch-all exception handler to ensure we return JSON and CORS headers even on 500 errors.
+    """
+    origin = request.headers.get("origin")
+    headers = {}
+    if origin:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "status": "error",
+            "code": "INTERNAL_SERVER_ERROR",
+            "message": f"Erro interno no servidor: {str(exc)}"
+        },
+        headers=headers
     )
 
 # Initialize Firebase Admin SDK

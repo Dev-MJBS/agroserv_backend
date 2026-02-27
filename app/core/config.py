@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     FIREBASE_UNIVERSE_DOMAIN: str = "googleapis.com"
 
     # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000"
+    ALLOWED_ORIGINS: str = "https://agroserv.netlify.app,http://localhost:3000"
 
     # Google Gemini / AI
     GEMINI_API_KEY: str = ""
