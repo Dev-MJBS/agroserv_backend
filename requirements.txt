@@ -8,3 +8,5 @@ pandas
 openpyxl
 pdfplumber
 reportlab
+openai
+httpx

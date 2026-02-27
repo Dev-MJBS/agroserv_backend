@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: str = "http://localhost:3000"
 
+    # OpenRouter / AI
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_MODEL: str = "google/gemini-2.0-flash-001" # Gemini 2.0 ou o modelo Flash mais recente
+    OPENROUTER_REFERER: str = "https://agroserv.netlify.app"
+    OPENROUTER_TITLE: str = "RH_Agroserv ERP"
+
     @property
     def cors_origins(self) -> List[str]:
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]

@@ -7,6 +7,7 @@ from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 from datetime import datetime
 from app.firebase_config import get_db
+from app.core.ai_service import analyze_with_ai
 from fastapi.responses import StreamingResponse
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -22,7 +23,8 @@ class ComparacaoSave(BaseModel):
     conferem: List[Dict[str, Any]]
     faltam_no_arquivo_1: List[Dict[str, Any]]
     faltam_no_arquivo_2: List[Dict[str, Any]]
-    termos_desconhecidos: List[Dict[str, Any]]
+    termos_desconhecidos: Optional[List[Dict[str, Any]]] = []
+    analise_ia: Optional[str] = ""
 
 def extract_dataframe_from_file(file_content: bytes, filename: str) -> pd.DataFrame:
     """
@@ -51,20 +53,29 @@ def extract_dataframe_from_file(file_content: bytes, filename: str) -> pd.DataFr
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro ao processar {filename}: {str(e)}")
 
-def analisar_termos_com_ia(dados: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Simula análise de IA para encontrar anomalias."""
-    termos_suspeitos = ["desconhecido", "erro", "n/a", "null", "pendente"]
-    anomalias = []
-    for item in dados:
-        for col, val in item.items():
-            if str(val).lower().strip() in termos_suspeitos or not str(val).strip():
-                anomalias.append({
-                    "coluna": col,
-                    "valor_encontrado": val,
-                    "motivo": "Termo suspeito ou campo vazio detectado pela IA",
-                    "registro_completo": item
-                })
-    return anomalias[:5]
+async def analisar_termos_com_ia(dados_faltantes: List[Dict[str, Any]]) -> str:
+    """
+    Usa o OpenRouter + Gemini 1.5/2.0 para uma análise detalhada dos itens faltantes.
+    """
+    if not dados_faltantes:
+        return "Nenhum dado faltante para análise."
+
+    # Criamos um prompt compacto para o modelo
+    resumo_amostra = json.dumps(dados_faltantes[:10], indent=2, ensure_ascii=False)
+    
+    prompt = f"""
+    Analise a seguinte amostra de registros que não foram encontrados na comparação entre dois documentos logísticos:
+    
+    {resumo_amostra}
+    
+    Identifique se há um padrão nestas falhas (ex: todos são da mesma transportadora ou falta um campo chave). 
+    Resuma em duas sentenças o que o gestor deve fazer agora. 
+    Responda em PORTUGUÊS.
+    """
+    
+    system_prompt = "Você é o assistente inteligente do Agroserv ERP, especialista em análise de logística agrícola e auditoria de documentos."
+    
+    return await analyze_with_ai(prompt, system_prompt)
 
 @router.post("/analisar-colunas")
 async def analisar_colunas(arquivo: UploadFile = File(...)):
@@ -149,7 +160,8 @@ async def comparar_documentos(
     faltam_no_1 = to_dict_list(faltam_no_1_tuples, cols_1)
     faltam_no_2 = to_dict_list(faltam_no_2_tuples, cols_1)
 
-    termos_desconhecidos = analisar_termos_com_ia(faltam_no_1 + faltam_no_2)
+    # Chamada real para o OpenRouter (Async)
+    analise_ia = await analisar_termos_com_ia(faltam_no_1 + faltam_no_2)
 
     return {
         "resumo": {
@@ -160,7 +172,8 @@ async def comparar_documentos(
         "conferem": conferem,
         "faltam_no_arquivo_1": faltam_no_1,
         "faltam_no_arquivo_2": faltam_no_2,
-        "termos_desconhecidos": termos_desconhecidos
+        "termos_desconhecidos": [], 
+        "analise_ia": analise_ia
     }
 
 @router.post("/salvar")
@@ -218,6 +231,11 @@ async def exportar_pdf(data: ComparacaoSave):
     ]))
     elements.append(t)
     
+    if data.analise_ia:
+        elements.append(Spacer(1, 24))
+        elements.append(Paragraph("Análise Inteligente (IA)", styles["Heading2"]))
+        elements.append(Paragraph(data.analise_ia, styles["Normal"]))
+
     if data.termos_desconhecidos:
         elements.append(Spacer(1, 24))
         elements.append(Paragraph("Alertas da IA", styles["Heading2"]))
