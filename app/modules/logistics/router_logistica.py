@@ -92,10 +92,16 @@ async def analisar_termos_com_ia(dados_faltantes: List[Dict[str, Any]], mapeamen
 
 @router.post("/analisar-colunas")
 async def analisar_colunas(arquivo: UploadFile = File(...)):
-    content = await arquivo.read()
-    df = extract_dataframe_from_file(content, arquivo.filename)
-    colunas = [str(col) for col in df.columns if pd.notna(col) and str(col).strip()]
-    return {"colunas": colunas}
+    try:
+        content = await arquivo.read()
+        df = extract_dataframe_from_file(content, arquivo.filename)
+        colunas = [str(col) for col in df.columns if pd.notna(col) and str(col).strip()]
+        return {"colunas": colunas}
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "LOG-ERR-FILE-READ", "message": f"Erro ao ler arquivo: {str(e)}"}
+        )
 
 @router.post("/comparar-documentos")
 async def comparar_documentos(

@@ -60,14 +60,9 @@ initialize_firebase()
 settings = get_settings()
 
 # CORS configuration
-# Se allow_credentials=True, allow_origins NÃO pode ser ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://agroserv.netlify.app",
-        "http://localhost:3000",
-        "https://agroserv-git-main-dev-mjbs.vercel.app" # Exemplo de preview
-    ],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -85,4 +80,6 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
