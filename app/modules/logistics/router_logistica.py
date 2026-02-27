@@ -29,6 +29,7 @@ class ComparacaoSave(BaseModel):
 def extract_dataframe_from_file(file_content: bytes, filename: str) -> pd.DataFrame:
     """
     Função auxiliar para ler o conteúdo do arquivo e converter em um DataFrame do Pandas.
+    Força a limpeza de valores para evitar o erro de objetos aninhados no React.
     """
     try:
         if filename.endswith('.csv'):
@@ -36,20 +37,26 @@ def extract_dataframe_from_file(file_content: bytes, filename: str) -> pd.DataFr
                 df = pd.read_csv(io.BytesIO(file_content))
             except Exception:
                 df = pd.read_csv(io.BytesIO(file_content), sep=';')
-            return df
         elif filename.endswith('.xlsx'):
             df = pd.read_excel(io.BytesIO(file_content), engine='openpyxl')
-            return df
         elif filename.endswith('.pdf'):
             with pdfplumber.open(io.BytesIO(file_content)) as pdf:
                 for page in pdf.pages:
                     table = page.extract_table()
                     if table:
                         df = pd.DataFrame(table[1:], columns=table[0])
-                        return df
-            raise ValueError("Nenhuma tabela legível encontrada no PDF.")
+                        break
+                else:
+                    raise ValueError("Nenhuma tabela legível encontrada no PDF.")
         else:
             raise ValueError("Formato não suportado. Use .csv, .xlsx ou .pdf.")
+
+        # LIMPEZA CRUCIAL: Converte tudo para string limpa
+        # Isso evita que objetos complexos (datas, números com formatação) quebrem o React.
+        df = df.fillna("")
+        df = df.apply(lambda col: col.astype(str).str.strip())
+        
+        return df
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro ao processar {filename}: {str(e)}")
 
